@@ -1,0 +1,21 @@
+# Expansion board PS/2 + USB + SD Card
+
+#
+# PS/2 port
+#
+#NET "XPS2_Data" LOC = "B4" | IOSTANDARD = LVCMOS33 | SLEW = SLOW | DRIVE = 8;
+#NET "XPS2_Clk"  LOC = "A4" | IOSTANDARD = LVCMOS33 | SLEW = SLOW | DRIVE = 8;
+
+#
+# USB port
+#
+NET "usb_in" LOC = "D5" | IOSTANDARD = LVTTL;
+#NET "USB_DM" LOC = "C5" | IOSTANDARD = LVTTL;
+
+#
+# SD Card slot
+#
+#NET "SDC_SS"   LOC = "B6" | IOSTANDARD = LVTTL;
+#NET "SDC_SCK"  LOC = "E7" | IOSTANDARD = LVTTL;
+#NET "SDC_MISO" LOC = "A6" | IOSTANDARD = LVTTL;
+#NET "SDC_MOSI" LOC = "F7" | IOSTANDARD = LVTTL;
