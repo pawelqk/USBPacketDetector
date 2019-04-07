@@ -6,20 +6,24 @@ entity USBPacketDetector is
            CLK : in  STD_LOGIC;
            reset: in STD_LOGIC;
            o_state: out std_logic_vector(2 downto 0);
+           data_out: out STD_LOGIC_VECTOR(7 downto 0);
            detected : out  STD_LOGIC);
 end USBPacketDetector;
 
 architecture Behavioral of USBPacketDetector is
-   type state_type is (st1_idle, st2_read, st3_check, st4_accept); 
+   type state_type is (st1_idle, st2_read, st3_check, st4_accept, st5_show); 
    signal state, next_state : state_type; 
    signal output_signal : std_logic;
+   signal i_state: std_logic_vector(2 downto 0) := "001";
 
    signal counter_reset: std_logic;
    signal counter_mod_5: natural range 0 to 4;
    signal counter_mod_9: natural range 0 to 8;
-
    signal shift_reg: std_logic_vector(7 downto 0);
-   signal i_state: std_logic_vector(2 downto 0) := "001";
+
+   signal received_byte: std_logic_vector(7 downto 0);
+   signal output_byte: std_logic_vector(7 downto 0);
+   signal decoded_bit: std_logic;
 
 begin
    SYNC_PROC: process (CLK)
@@ -34,7 +38,17 @@ begin
    end process;
    
    detected <= output_signal;
+   data_out <= output_byte;
    o_state <= i_state;
+   
+   SHOW_BYTE: process (state)
+   begin
+      if state = st5_show then
+         output_byte <= received_byte;
+      else
+         output_byte <= X"00";
+      end if;
+   end process;
  
    OUTPUT_DECODE: process (state)
    begin
@@ -47,7 +61,7 @@ begin
    
    COUNTER_STATE: process (state)
    begin
-      if state = st2_read then
+      if state = st2_read or state = st4_accept then
          counter_reset <= '0';
       else
          counter_reset <= '1';
@@ -77,6 +91,11 @@ begin
             end if;
          when st4_accept =>
             i_state <= "100";
+            if counter_mod_9 = 8 then
+               next_state <= st5_show;
+            end if;
+         when st5_show =>
+            i_state <= "101";
          when others =>
             next_state <= st1_idle;
       end case;      
@@ -123,6 +142,24 @@ begin
    begin
       if rising_edge(CLK) and counter_mod_5=1 then
          shift_reg( 7 downto 0 ) <= shift_reg( 6 downto 0 ) & usb_in;
+      end if;
+   end process;
+   
+-- BIT DECODER
+   process(CLK)
+   variable previous_bit: std_logic;
+   begin
+      if rising_edge(CLK) and counter_mod_5=1 then
+         decoded_bit <= previous_bit xnor usb_in;
+         previous_bit := usb_in;
+      end if;
+   end process;
+
+-- BYTE RECORDER
+   process(CLK)
+   begin
+      if rising_edge(CLK) and counter_mod_5=1 and state = st4_accept then
+         received_byte( 7 downto 0 ) <= received_byte( 6 downto 0 ) & decoded_bit;
       end if;
    end process;
 
