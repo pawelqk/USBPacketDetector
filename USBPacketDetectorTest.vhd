@@ -13,7 +13,6 @@ ARCHITECTURE behavioral OF scheme_scheme_sch_tb IS
           Clk_60MHz   :   OUT   STD_LOGIC;
           detected   :   OUT   STD_LOGIC;
           o_state: OUT STD_LOGIC_VECTOR(2 downto 0);
-          data_out: out STD_LOGIC_VECTOR(7 downto 0);
           usb_in   :   IN   STD_LOGIC);
    END COMPONENT;
 
@@ -33,8 +32,7 @@ BEGIN
       Clk_60MHz => Clk_60MHz, 
       detected => detected, 
       usb_in => usb_in,
-      o_state => o_state,
-      data_out => data_out
+      o_state => o_state
    );
 
    CLK_IN <= not CLK_IN after 10 ns; -- after 1 us / 120

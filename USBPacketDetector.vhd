@@ -21,9 +21,10 @@ architecture Behavioral of USBPacketDetector is
    signal counter_mod_9: natural range 0 to 8;
    signal shift_reg: std_logic_vector(7 downto 0);
 
-   signal received_byte: std_logic_vector(7 downto 0);
+   signal received_byte: std_logic_vector(7 downto 0);   -- container shift register for first received byte (least significant bit first)
    signal output_byte: std_logic_vector(7 downto 0);
    signal decoded_bit: std_logic;
+   signal previous_bit: std_logic;
 
 begin
    SYNC_PROC: process (CLK)
@@ -38,10 +39,11 @@ begin
    end process;
    
    detected <= output_signal;
+   decoded_bit <= previous_bit xnor usb_in;
    data_out <= output_byte;
    o_state <= i_state;
    
-   SHOW_BYTE: process (state)
+   SHOW_BYTE: process (state, received_byte)
    begin
       if state = st5_show then
          output_byte <= received_byte;
@@ -97,6 +99,7 @@ begin
          when st5_show =>
             i_state <= "101";
          when others =>
+            i_state <= "000";
             next_state <= st1_idle;
       end case;      
    end process;
@@ -138,7 +141,7 @@ begin
 
 -- REJESTR PRZESUWNY
 
-   process(CLK)
+   process(CLK, counter_mod_5)
    begin
       if rising_edge(CLK) and counter_mod_5=1 then
          shift_reg( 7 downto 0 ) <= shift_reg( 6 downto 0 ) & usb_in;
@@ -146,20 +149,22 @@ begin
    end process;
    
 -- BIT DECODER
-   process(CLK)
-   variable previous_bit: std_logic;
+   process(CLK, usb_in)
    begin
       if rising_edge(CLK) and counter_mod_5=1 then
-         decoded_bit <= previous_bit xnor usb_in;
-         previous_bit := usb_in;
+         previous_bit <= usb_in;
       end if;
    end process;
 
 -- BYTE RECORDER
-   process(CLK)
+   process(CLK, counter_mod_5, decoded_bit)
    begin
       if rising_edge(CLK) and counter_mod_5=1 and state = st4_accept then
-         received_byte( 7 downto 0 ) <= received_byte( 6 downto 0 ) & decoded_bit;
+         for i in 6 downto 0 loop  
+            received_byte(i) <= received_byte(i+1);
+         end loop; 
+         received_byte(7) <= decoded_bit;
+         --received_byte( 0 downto 7 ) <= decoded_bit & received_byte( 0 downto 6 );
       end if;
    end process;
 
