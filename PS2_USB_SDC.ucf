@@ -10,7 +10,7 @@
 # USB port
 #
 NET "usb_in" LOC = "D5" | IOSTANDARD = LVTTL;
-#NET "USB_DM" LOC = "C5" | IOSTANDARD = LVTTL;
+NET "data_minus" LOC = "C5" | IOSTANDARD = LVTTL;
 
 #
 # SD Card slot

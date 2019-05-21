@@ -13,7 +13,8 @@ ARCHITECTURE behavioral OF scheme_scheme_sch_tb IS
           Clk_60MHz   :   OUT   STD_LOGIC;
           detected   :   OUT   STD_LOGIC;
           o_state: OUT STD_LOGIC_VECTOR(2 downto 0);
-          usb_in   :   IN   STD_LOGIC);
+          usb_in   :   IN   STD_LOGIC;
+          data_minus: IN STD_LOGIC);
    END COMPONENT;
 
    SIGNAL CLK_IN   :   STD_LOGIC := '0';
@@ -23,6 +24,8 @@ ARCHITECTURE behavioral OF scheme_scheme_sch_tb IS
    SIGNAL o_state : STD_LOGIC_VECTOR(2 downto 0);
    signal rst : STD_LOGIC := '0';
    signal data_out: STD_LOGIC_VECTOR(7 downto 0);
+   signal data_minus: std_logic;
+   signal data_ready: std_logic;
 
 BEGIN
 
@@ -32,19 +35,30 @@ BEGIN
       Clk_60MHz => Clk_60MHz, 
       detected => detected, 
       usb_in => usb_in,
-      o_state => o_state
+      o_state => o_state,
+      data_minus => data_minus
    );
 
    CLK_IN <= not CLK_IN after 10 ns; -- after 1 us / 120
 
    tb : PROCESS
-      --constant test_bits : std_logic_vector (0 to 39) := B"1111_01010111_1111_01010100_0101010001010101";
-      constant test_bits: std_logic_vector(0 to 14) := B"01010100_1010011";
+      constant test_bits: std_logic_vector(0 to 16):= B"01010100_0000001_11";
    BEGIN
+      wait for 230 ns;
       for i in test_bits'range loop
          usb_in <= test_bits(i);
+         data_minus <= not test_bits(i);
          wait for 1 us / 12;
       end loop;
+      usb_in <= '0';
+      data_minus <= '0';
+      wait for 1 us / 12;
+      usb_in <= '0';
+      data_minus <= '0';
+      wait for 1 us / 12;
+      usb_in <= '1';
+      data_minus <= '0';
+      wait for 1 us / 12;
    END PROCESS;
 
 END;
